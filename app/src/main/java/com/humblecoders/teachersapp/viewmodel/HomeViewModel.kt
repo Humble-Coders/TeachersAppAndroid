@@ -29,6 +29,10 @@ class HomeViewModel(
     var isLoading by mutableStateOf(false)
     var alertMessage by mutableStateOf("")
     var showAlert by mutableStateOf(false)
+    var availableSubjects by mutableStateOf<List<String>>(emptyList())
+    var availableClasses by mutableStateOf<List<String>>(emptyList())
+
+
 
     val sessionTypes = listOf(
         "lect" to "Lecture",
@@ -39,8 +43,55 @@ class HomeViewModel(
     val canActivateSession: Boolean
         get() = selectedClasses.isNotEmpty() && selectedSubject.isNotEmpty() && selectedRoom.isNotEmpty()
 
+
+
     init {
         loadRooms()
+        loadAvailableSubjects()
+        loadAvailableClasses()
+
+    }
+
+    private fun loadAvailableSubjects() {
+        viewModelScope.launch {
+            availableSubjects = firebaseRepository.fetchSubjects()
+        }
+    }
+    private fun loadAvailableClasses() {
+        viewModelScope.launch {
+            availableClasses = firebaseRepository.fetchClasses()
+        }
+    }
+
+
+    fun addSubjectToTeacher(subject: String, authViewModel: AuthViewModel) {
+        val teacherData = authViewModel.teacherData ?: return
+        val updatedSubjects = teacherData.subjects.toMutableList()
+
+        if (!updatedSubjects.contains(subject)) {
+            updatedSubjects.add(subject)
+            val updatedTeacherData = teacherData.copy(subjects = updatedSubjects)
+
+            viewModelScope.launch {
+                authRepository.saveTeacherData(updatedTeacherData)
+                authViewModel.teacherData = updatedTeacherData
+            }
+        }
+    }
+
+    fun addClassToTeacher(className: String, authViewModel: AuthViewModel) {
+        val teacherData = authViewModel.teacherData ?: return
+        val updatedClasses = teacherData.classes.toMutableList()
+
+        if (!updatedClasses.contains(className)) {
+            updatedClasses.add(className)
+            val updatedTeacherData = teacherData.copy(classes = updatedClasses)
+
+            viewModelScope.launch {
+                authRepository.saveTeacherData(updatedTeacherData)
+                authViewModel.teacherData = updatedTeacherData
+            }
+        }
     }
 
     private fun loadRooms() {

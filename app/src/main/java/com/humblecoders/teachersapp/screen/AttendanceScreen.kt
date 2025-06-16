@@ -86,207 +86,195 @@ fun AttendanceScreen(
                 )
                 .padding(paddingValues)
         ) {
-            LazyColumn(
+            Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(horizontal = 20.dp),
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
+                Spacer(modifier = Modifier.height(20.dp))
+
                 // Session Info Header
-                item {
-                    sessionData?.let { session ->
-                        Card(
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.White.copy(alpha = 0.15f)
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Column(
-                                modifier = Modifier.padding(16.dp),
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                Text(
-                                    text = session.subject,
-                                    fontSize = 18.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
-                                )
-
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(20.dp)
-                                ) {
-                                    Text(
-                                        text = "Room: ${session.room}",
-                                        fontSize = 12.sp,
-                                        color = Color.White.copy(alpha = 0.8f)
-                                    )
-                                    Text(
-                                        text = "| ${session.type.uppercase()}",
-                                        fontSize = 12.sp,
-                                        color = Color.White.copy(alpha = 0.8f)
-                                    )
-                                    if (session.isExtra) {
-                                        Text(
-                                            text = "| EXTRA",
-                                            fontSize = 12.sp,
-                                            color = Color.White.copy(alpha = 0.8f)
-                                        )
-                                    }
-                                }
-
-                                Text(
-                                    text = session.date,
-                                    fontSize = 12.sp,
-                                    color = Color.White.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-                    }
-                }
-
-                // Attendance Section
-                item {
+                sessionData?.let { session ->
                     Card(
                         modifier = Modifier.fillMaxWidth(),
                         colors = CardDefaults.cardColors(
-                            containerColor = Color.White.copy(alpha = 0.1f)
+                            containerColor = Color.White.copy(alpha = 0.15f)
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Column(
                             modifier = Modifier.padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Text(
+                                text = session.subject,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White
+                            )
+
                             Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
+                                horizontalArrangement = Arrangement.spacedBy(20.dp)
                             ) {
                                 Text(
-                                    text = "Present Students",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.White
+                                    text = "Room: ${session.room}",
+                                    fontSize = 12.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
                                 )
-
-                                Card(
-                                    colors = CardDefaults.cardColors(
-                                        containerColor = Color.White.copy(alpha = 0.2f)
-                                    ),
-                                    shape = RoundedCornerShape(12.dp)
-                                ) {
+                                Text(
+                                    text = "| ${session.type.uppercase()}",
+                                    fontSize = 12.sp,
+                                    color = Color.White.copy(alpha = 0.8f)
+                                )
+                                if (session.isExtra) {
                                     Text(
-                                        text = "${attendanceViewModel.attendanceList.size} students",
+                                        text = "| EXTRA",
                                         fontSize = 12.sp,
-                                        color = Color.White,
-                                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                        color = Color.White.copy(alpha = 0.8f)
                                     )
                                 }
                             }
 
-                            when {
-                                attendanceViewModel.isLoading -> {
-                                    // Loading State
-                                    Card(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color.White.copy(alpha = 0.1f)
-                                        ),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(40.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                                        ) {
-                                            CircularProgressIndicator(
-                                                color = Color.White,
-                                                modifier = Modifier.size(50.dp),
-                                                strokeWidth = 4.dp
-                                            )
-                                            Text(
-                                                text = "Loading attendance records...",
-                                                fontSize = 14.sp,
-                                                color = Color.White.copy(alpha = 0.8f),
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
-                                }
+                            Text(
+                                text = session.date,
+                                fontSize = 12.sp,
+                                color = Color.White.copy(alpha = 0.7f)
+                            )
+                        }
+                    }
+                }
 
-                                attendanceViewModel.attendanceList.isEmpty() -> {
-                                    // Empty State
-                                    Card(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color.White.copy(alpha = 0.1f)
-                                        ),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(40.dp),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
-                                            verticalArrangement = Arrangement.spacedBy(16.dp)
-                                        ) {
-                                            Icon(
-                                                imageVector = Icons.Default.PersonOff,
-                                                contentDescription = null,
-                                                modifier = Modifier.size(50.dp),
-                                                tint = Color.White.copy(alpha = 0.6f)
-                                            )
-                                            Text(
-                                                text = "No students marked present",
-                                                fontSize = 16.sp,
-                                                fontWeight = FontWeight.Medium,
-                                                color = Color.White.copy(alpha = 0.8f),
-                                                textAlign = TextAlign.Center
-                                            )
-                                            Text(
-                                                text = "Students will appear here once they mark their attendance",
-                                                fontSize = 12.sp,
-                                                color = Color.White.copy(alpha = 0.6f),
-                                                textAlign = TextAlign.Center
-                                            )
-                                        }
-                                    }
-                                }
+                // Attendance Section Header
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White.copy(alpha = 0.1f)
+                    ),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Present Students",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
 
-                                else -> {
-                                    // Attendance List
-                                    Card(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        colors = CardDefaults.cardColors(
-                                            containerColor = Color.White.copy(alpha = 0.1f)
-                                        ),
-                                        shape = RoundedCornerShape(12.dp)
-                                    ) {
-                                        LazyColumn(
-                                            modifier = Modifier.padding(16.dp),
-                                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                                        ) {
-                                            items(attendanceViewModel.attendanceList) { record ->
-                                                AttendanceRowItem(
-                                                    record = record,
-                                                    formatTimestamp = { timestamp ->
-                                                        attendanceViewModel.formatTimestamp(timestamp)
-                                                    }
-                                                )
-                                            }
-                                        }
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White.copy(alpha = 0.2f)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text(
+                                text = "${attendanceViewModel.attendanceList.size} students",
+                                fontSize = 12.sp,
+                                color = Color.White,
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                            )
+                        }
+                    }
+                }
+
+                // Attendance List Content
+                when {
+                    attendanceViewModel.isLoading -> {
+                        // Loading State
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White.copy(alpha = 0.1f)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(40.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    color = Color.White,
+                                    modifier = Modifier.size(50.dp),
+                                    strokeWidth = 4.dp
+                                )
+                                Text(
+                                    text = "Loading attendance records...",
+                                    fontSize = 14.sp,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+
+                    attendanceViewModel.attendanceList.isEmpty() -> {
+                        // Empty State
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.White.copy(alpha = 0.1f)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(40.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.PersonOff,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(50.dp),
+                                    tint = Color.White.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = "No students marked present",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White.copy(alpha = 0.8f),
+                                    textAlign = TextAlign.Center
+                                )
+                                Text(
+                                    text = "Students will appear here once they mark their attendance",
+                                    fontSize = 12.sp,
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    }
+
+                    else -> {
+                        // Attendance List - Using LazyColumn but as separate component
+                        LazyColumn(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(attendanceViewModel.attendanceList) { record ->
+                                AttendanceRowItem(
+                                    record = record,
+                                    formatTimestamp = { timestamp ->
+                                        attendanceViewModel.formatTimestamp(timestamp)
                                     }
-                                }
+                                )
                             }
                         }
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(20.dp)) }
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }

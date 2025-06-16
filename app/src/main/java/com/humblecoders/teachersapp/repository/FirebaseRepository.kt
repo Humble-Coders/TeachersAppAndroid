@@ -74,19 +74,25 @@ class FirebaseRepository {
                 sessionRef.update("isActive", false).await()
             }
 
-            // Update subject counters
+            // Update subject counters with proper map structure
             val subjectRef = db.collection("subjects").document(sessionData.subject)
             val subjectDoc = subjectRef.get().await()
 
             if (subjectDoc.exists()) {
+                // Document exists, update each class individually
                 sessionData.classes.forEach { className ->
                     val currentValue = subjectDoc.getLong("${className}.${sessionData.type}") ?: 0L
                     subjectRef.update("${className}.${sessionData.type}", currentValue + 1).await()
                 }
             } else {
-                val data = mutableMapOf<String, Any>()
+                // Document doesn't exist, create with proper map structure for all classes
+                val data = mutableMapOf<String, Map<String, Long>>()
                 sessionData.classes.forEach { className ->
-                    data["${className}.${sessionData.type}"] = 1
+                    data[className] = mapOf(
+                        "lect" to if (sessionData.type == "lect") 1L else 0L,
+                        "lab" to if (sessionData.type == "lab") 1L else 0L,
+                        "tut" to if (sessionData.type == "tut") 1L else 0L
+                    )
                 }
                 subjectRef.set(data).await()
             }
@@ -103,60 +109,119 @@ class FirebaseRepository {
             val formatter = SimpleDateFormat("yyyy_MM", Locale.getDefault())
             val collectionName = "attendance_${formatter.format(currentDate)}"
 
+            println("=== DEBUG ATTENDANCE FETCH ===")
+            println("Collection: $collectionName")
+            println("Session data: $sessionData")
+            println("Looking for classes: ${sessionData.classes}")
+            println("Date: ${sessionData.date}")
+            println("Subject: ${sessionData.subject}")
+            println("Type: ${sessionData.type}")
+            println("Room: ${sessionData.room}")
+            println("IsExtra: ${sessionData.isExtra}")
+
             val attendanceRecords = mutableListOf<AttendanceRecord>()
 
-            sessionData.classes.forEach { className ->
-                val querySnapshot = db.collection(collectionName)
-                    .whereEqualTo("present", true)
-                    .get()
-                    .await()
+            // First, let's get ALL present records and see what we have
+            val querySnapshot = db.collection(collectionName)
+                .whereEqualTo("present", true)
+                .get()
+                .await()
 
-                querySnapshot.documents.forEach { doc ->
-                    val data = doc.data ?: return@forEach
+            println("Total present records found: ${querySnapshot.documents.size}")
 
-                    val rollNumber = when (val rollNumberValue = data["rollNumber"]) {
-                        is Int -> rollNumberValue.toString()
-                        is String -> rollNumberValue
-                        else -> return@forEach
-                    }
+            querySnapshot.documents.forEachIndexed { index, doc ->
+                val data = doc.data ?: return@forEachIndexed
 
-                    val group = data["group"] as? String ?: return@forEach
-                    val timestamp = data["timestamp"] as? Timestamp ?: return@forEach
-                    val docDate = data["date"] as? String ?: return@forEach
-                    val docSubject = data["subject"] as? String ?: return@forEach
-                    val docType = data["type"] as? String ?: return@forEach
-                    val deviceRoom = data["deviceRoom"] as? String ?: ""
+                println("--- Record $index ---")
+                println("Document ID: ${doc.id}")
+                println("Full data: $data")
 
-                    val docIsExtra = when (val isExtraValue = data["isExtra"]) {
-                        is Boolean -> isExtraValue
-                        is Int -> isExtraValue == 1
-                        else -> return@forEach
-                    }
-
-                    val timestampString = formatFirebaseTimestamp(timestamp)
-
-                    // Check all conditions
-                    val dateMatch = docDate == sessionData.date
-                    val subjectMatch = docSubject == sessionData.subject
-                    val typeMatch = docType == sessionData.type
-                    val groupMatch = group == className
-                    val extraMatch = docIsExtra == sessionData.isExtra
-                    val roomMatch = deviceRoom.isNotEmpty() && deviceRoom.startsWith(sessionData.room)
-
-                    if (dateMatch && subjectMatch && typeMatch && groupMatch && extraMatch && roomMatch) {
-                        attendanceRecords.add(
-                            AttendanceRecord(
-                                rollNumber = rollNumber,
-                                group = group,
-                                timestamp = timestampString
-                            )
-                        )
+                val rollNumber = when (val rollNumberValue = data["rollNumber"]) {
+                    is Int -> rollNumberValue.toString()
+                    is String -> rollNumberValue
+                    else -> {
+                        println("Invalid rollNumber: $rollNumberValue")
+                        return@forEachIndexed
                     }
                 }
+
+                val group = data["group"] as? String ?: run {
+                    println("Missing group field")
+                    return@forEachIndexed
+                }
+
+                val timestamp = data["timestamp"] as? Timestamp ?: run {
+                    println("Missing timestamp field")
+                    return@forEachIndexed
+                }
+
+                val docDate = data["date"] as? String ?: run {
+                    println("Missing date field")
+                    return@forEachIndexed
+                }
+
+                val docSubject = data["subject"] as? String ?: run {
+                    println("Missing subject field")
+                    return@forEachIndexed
+                }
+
+                val docType = data["type"] as? String ?: run {
+                    println("Missing type field")
+                    return@forEachIndexed
+                }
+
+                val deviceRoom = data["deviceRoom"] as? String ?: ""
+
+                val docIsExtra = when (val isExtraValue = data["isExtra"]) {
+                    is Boolean -> isExtraValue
+                    is Int -> isExtraValue == 1
+                    else -> {
+                        println("Invalid isExtra value: $isExtraValue")
+                        return@forEachIndexed
+                    }
+                }
+
+                // Check each condition
+                val dateMatch = docDate == sessionData.date
+                val subjectMatch = docSubject == sessionData.subject
+                val typeMatch = docType == sessionData.type
+                val groupMatch = sessionData.classes.contains(group)
+                val extraMatch = docIsExtra == sessionData.isExtra
+                val roomMatch = deviceRoom.isNotEmpty() && deviceRoom.startsWith(sessionData.room)
+
+                println("Roll: $rollNumber, Group: $group")
+                println("Date match: $dateMatch ($docDate vs ${sessionData.date})")
+                println("Subject match: $subjectMatch ($docSubject vs ${sessionData.subject})")
+                println("Type match: $typeMatch ($docType vs ${sessionData.type})")
+                println("Group match: $groupMatch ($group in ${sessionData.classes})")
+                println("Extra match: $extraMatch ($docIsExtra vs ${sessionData.isExtra})")
+                println("Room match: $roomMatch ($deviceRoom starts with ${sessionData.room})")
+
+                if (dateMatch && subjectMatch && typeMatch && groupMatch && extraMatch && roomMatch) {
+                    val timestampString = formatFirebaseTimestamp(timestamp)
+                    attendanceRecords.add(
+                        AttendanceRecord(
+                            rollNumber = rollNumber,
+                            group = group,
+                            timestamp = timestampString
+                        )
+                    )
+                    println("✅ ADDED to results")
+                } else {
+                    println("❌ REJECTED")
+                }
+            }
+
+            println("=== FINAL RESULTS ===")
+            println("Total matching records: ${attendanceRecords.size}")
+            attendanceRecords.forEach { record ->
+                println("Roll: ${record.rollNumber}, Group: ${record.group}")
             }
 
             attendanceRecords.sortedBy { it.rollNumber }
         } catch (e: Exception) {
+            println("Error fetching attendance: ${e.message}")
+            e.printStackTrace()
             emptyList()
         }
     }

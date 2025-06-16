@@ -6,8 +6,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Stop
@@ -38,6 +40,7 @@ fun HomeScreen(
     var showAddSubjectDialog by remember { mutableStateOf(false) }
     var newSubjectText by remember { mutableStateOf("") }
     var subjectDropdownExpanded by remember { mutableStateOf(false) }
+    var showAddClassDialog by remember { mutableStateOf(false) }
 
 
     val gradientColors = listOf(
@@ -53,12 +56,40 @@ fun HomeScreen(
         }
     }
 
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = "Smart Attend",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                },
+                actions = {
+                    TextButton(
+                        onClick = { authViewModel.logout() },
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Text("Logout")
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = Color.Transparent
+                )
+            )
+        },
+        containerColor = Color.Transparent
+    ) { paddingValues ->
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(gradientColors)
-            )
+            ).padding(paddingValues)
     ) {
         LazyColumn(
             modifier = Modifier
@@ -89,14 +120,31 @@ fun HomeScreen(
             }
 
             // Classes Selection
+            // Classes Selection
             item {
                 SessionCard(title = "Select Classes") {
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            text = "Choose the classes you're teaching:",
-                            fontSize = 12.sp,
-                            color = Color.Gray
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Choose the classes you're teaching:",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+
+                            IconButton(
+                                onClick = { showAddClassDialog = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Add,
+                                    contentDescription = "Add Class",
+                                    tint = Color(0xFF5CB8FF)
+                                )
+                            }
+                        }
 
                         authViewModel.teacherData?.classes?.forEach { className ->
                             Row(
@@ -140,7 +188,7 @@ fun HomeScreen(
                         ) {
                             ExposedDropdownMenuBox(
                                 expanded = subjectDropdownExpanded,
-                                onExpandedChange = {subjectDropdownExpanded = it },
+                                onExpandedChange = { subjectDropdownExpanded = it },
                                 modifier = Modifier.weight(1f)
                             ) {
                                 OutlinedTextField(
@@ -161,7 +209,7 @@ fun HomeScreen(
 
                                 ExposedDropdownMenu(
                                     expanded = subjectDropdownExpanded,
-                                    onDismissRequest = { subjectDropdownExpanded = false}
+                                    onDismissRequest = { subjectDropdownExpanded = false }
                                 ) {
                                     authViewModel.teacherData?.subjects?.forEach { subject ->
                                         DropdownMenuItem(
@@ -179,7 +227,7 @@ fun HomeScreen(
                                 onClick = { showAddSubjectDialog = true }
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.PlayArrow,
+                                    imageVector = Icons.Default.Add,
                                     contentDescription = "Add",
                                     tint = Color(0xFF5CB8FF)
                                 )
@@ -376,6 +424,7 @@ fun HomeScreen(
             item { Spacer(modifier = Modifier.height(20.dp)) }
         }
     }
+    }
 
     // Dialogs and Alerts
     if (homeViewModel.showAlert) {
@@ -415,6 +464,78 @@ fun HomeScreen(
         )
     }
 
+
+    if (showAddClassDialog) {
+        var classSearchText by remember { mutableStateOf("") }
+        var showClassDropdown by remember { mutableStateOf(false) }
+
+        AlertDialog(
+            onDismissRequest = {
+                showAddClassDialog = false
+                classSearchText = ""
+            },
+            title = { Text("Add Class to Your List") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = classSearchText,
+                        onValueChange = {
+                            classSearchText = it
+                            showClassDropdown = it.isNotEmpty()
+                        },
+                        label = { Text("Search classes...") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (showClassDropdown) {
+                        val availableClasses = homeViewModel.availableClasses
+                        val filteredClasses = availableClasses.filter {
+                            it.contains(classSearchText, ignoreCase = true) &&
+                                    !authViewModel.teacherData?.classes?.contains(it)!! ?: false                        }
+
+                        if (filteredClasses.isNotEmpty()) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            ) {
+                                LazyColumn(
+                                    modifier = Modifier.heightIn(max = 150.dp)
+                                ) {
+                                    items(filteredClasses) { className ->
+                                        DropdownMenuItem(
+                                            text = { Text(className) },
+                                            onClick = {
+                                                homeViewModel.addClassToTeacher(className, authViewModel)
+                                                showAddClassDialog = false
+                                                classSearchText = ""
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "No classes found or all classes already added",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showAddClassDialog = false
+                        classSearchText = ""
+                    }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
     if (showEndSessionConfirm) {
         AlertDialog(
             onDismissRequest = { showEndSessionConfirm = false },
@@ -441,39 +562,68 @@ fun HomeScreen(
     }
 
     if (showAddSubjectDialog) {
+        var subjectSearchText by remember { mutableStateOf("") }
+        var showSubjectDropdown by remember { mutableStateOf(false) }
+
         AlertDialog(
             onDismissRequest = {
                 showAddSubjectDialog = false
-                newSubjectText = ""
+                subjectSearchText = ""
             },
-            title = { Text("Add New Subject") },
+            title = { Text("Add Subject to Your List") },
             text = {
-                OutlinedTextField(
-                    value = newSubjectText,
-                    onValueChange = { newSubjectText = it },
-                    label = { Text("Subject name") }
-                )
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = subjectSearchText,
+                        onValueChange = {
+                            subjectSearchText = it
+                            showSubjectDropdown = it.isNotEmpty()
+                        },
+                        label = { Text("Search subjects...") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    if (showSubjectDropdown) {
+                        val availableSubjects = homeViewModel.availableSubjects
+                        val filteredSubjects = availableSubjects.filter {
+                            it.contains(subjectSearchText, ignoreCase = true) &&
+                                    !authViewModel.teacherData?.subjects?.contains(it)!! ?: false                        }
+
+                        if (filteredSubjects.isNotEmpty()) {
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                            ) {
+                                LazyColumn(
+                                    modifier = Modifier.heightIn(max = 150.dp)
+                                ) {
+                                    items(filteredSubjects) { subject ->
+                                        DropdownMenuItem(
+                                            text = { Text(subject) },
+                                            onClick = {
+                                                homeViewModel.addSubjectToTeacher(subject, authViewModel)
+                                                showAddSubjectDialog = false
+                                                subjectSearchText = ""
+                                            }
+                                        )
+                                    }
+                                }
+                            }
+                        } else {
+                            Text(
+                                text = "No subjects found or all subjects already added",
+                                fontSize = 12.sp,
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
             },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        val updatedTeacherData = homeViewModel.addNewSubject(
-                            newSubjectText,
-                            authViewModel.teacherData
-                        )
-                        updatedTeacherData?.let { authViewModel.teacherData = it }
                         showAddSubjectDialog = false
-                        newSubjectText = ""
-                    }
-                ) {
-                    Text("Add")
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        showAddSubjectDialog = false
-                        newSubjectText = ""
+                        subjectSearchText = ""
                     }
                 ) {
                     Text("Cancel")

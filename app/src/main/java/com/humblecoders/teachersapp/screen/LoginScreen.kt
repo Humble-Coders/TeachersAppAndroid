@@ -406,15 +406,15 @@ fun SearchableSection(
                     shape = RoundedCornerShape(12.dp)
                 )
 
-                IconButton(
-                    onClick = onAddNew
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "Add",
-                        tint = Color(0xFF5CB8FF)
-                    )
-                }
+//                IconButton(
+//                    onClick = onAddNew
+//                ) {
+//                    Icon(
+//                        imageVector = Icons.Default.Add,
+//                        contentDescription = "Add",
+//                        tint = Color(0xFF5CB8FF)
+//                    )
+//                }
             }
 
             if (showDropdown && availableItems.isNotEmpty()) {
