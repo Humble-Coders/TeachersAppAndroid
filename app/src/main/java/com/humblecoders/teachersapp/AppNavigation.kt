@@ -1,6 +1,7 @@
 package com.humblecoders.teachersapp
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -27,9 +28,12 @@ fun AppNavigation(
             LoginScreen(authViewModel = authViewModel)
 
             // Navigate to home when logged in
-            if (authViewModel.isLoggedIn) {
-                navController.navigate("home") {
-                    popUpTo("login") { inclusive = true }
+            // ✅ Fix - Use LaunchedEffect
+            LaunchedEffect(authViewModel.isLoggedIn) {
+                if (authViewModel.isLoggedIn) {
+                    navController.navigate("home") {
+                        popUpTo("login") { inclusive = true }
+                    }
                 }
             }
         }

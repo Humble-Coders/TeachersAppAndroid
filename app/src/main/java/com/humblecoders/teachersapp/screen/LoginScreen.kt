@@ -62,6 +62,8 @@ fun LoginScreen(authViewModel: AuthViewModel) {
     var showNewClassDialog by remember { mutableStateOf(false) }
     var newSubjectText by remember { mutableStateOf("") }
     var newClassText by remember { mutableStateOf("") }
+    var designationDropdownExpanded by remember { mutableStateOf(false) }
+
 
     val gradientColors = listOf(
         Color(0xFF5CB8FF),
@@ -153,8 +155,8 @@ fun LoginScreen(authViewModel: AuthViewModel) {
                         )
 
                         ExposedDropdownMenuBox(
-                            expanded = false,
-                            onExpandedChange = { }
+                            expanded = designationDropdownExpanded,
+                            onExpandedChange = { designationDropdownExpanded = it }
                         ) {
                             OutlinedTextField(
                                 value = authViewModel.selectedDesignation,
@@ -169,14 +171,15 @@ fun LoginScreen(authViewModel: AuthViewModel) {
                             )
 
                             ExposedDropdownMenu(
-                                expanded = false,
-                                onDismissRequest = { }
+                                expanded = designationDropdownExpanded,
+                                onDismissRequest = { designationDropdownExpanded = false}
                             ) {
                                 authViewModel.designations.forEach { designation ->
                                     DropdownMenuItem(
                                         text = { Text(designation) },
                                         onClick = {
                                             authViewModel.selectedDesignation = designation
+                                            designationDropdownExpanded = false
                                         }
                                     )
                                 }

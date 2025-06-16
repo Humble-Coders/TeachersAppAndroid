@@ -17,6 +17,8 @@ class FirebaseRepository {
             val document = db.collection("subjects_list").document("subjects_list").get().await()
             document.get("subjects_list") as? List<String> ?: emptyList()
         } catch (e: Exception) {
+            println("Error fetching subjects: ${e.message}")
+
             emptyList()
         }
     }
@@ -26,6 +28,8 @@ class FirebaseRepository {
             val document = db.collection("classes").document("classes_list").get().await()
             document.get("classes_list") as? List<String> ?: emptyList()
         } catch (e: Exception) {
+            println("Error fetching classes: ${e.message}")
+
             emptyList()
         }
     }
@@ -35,6 +39,8 @@ class FirebaseRepository {
             val document = db.collection("rooms").document("rooms_list").get().await()
             document.get("rooms_list") as? List<String> ?: emptyList()
         } catch (e: Exception) {
+            println("Error fetching rooms: ${e.message}")
+
             emptyList()
         }
     }

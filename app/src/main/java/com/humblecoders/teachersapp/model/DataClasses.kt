@@ -1,5 +1,8 @@
 package com.humblecoders.teachersapp.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class TeacherData(
     val name: String,
     val designation: String,
@@ -7,7 +10,7 @@ data class TeacherData(
     val classes: List<String>
 )
 
-
+@Serializable
 data class SessionData(
     val classes: List<String>,
     val subject: String,
@@ -19,6 +22,7 @@ data class SessionData(
     val isActive: Boolean
 )
 
+@Serializable
 data class AttendanceRecord(
     val rollNumber: String,
     val group: String,

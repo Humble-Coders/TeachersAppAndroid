@@ -37,17 +37,19 @@ fun HomeScreen(
     var showEndSessionConfirm by remember { mutableStateOf(false) }
     var showAddSubjectDialog by remember { mutableStateOf(false) }
     var newSubjectText by remember { mutableStateOf("") }
+    var subjectDropdownExpanded by remember { mutableStateOf(false) }
+
 
     val gradientColors = listOf(
         Color(0xFF5CB8FF),
         Color(0xFF94A6FF)
     )
 
-    val filteredRooms = if (roomSearchText.isEmpty()) {
+    val filteredRooms = if (homeViewModel.selectedRoom.isEmpty()) {
         homeViewModel.availableRooms
     } else {
         homeViewModel.availableRooms.filter {
-            it.contains(roomSearchText, ignoreCase = true)
+            it.contains(homeViewModel.selectedRoom, ignoreCase = true)
         }
     }
 
@@ -137,8 +139,8 @@ fun HomeScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             ExposedDropdownMenuBox(
-                                expanded = false,
-                                onExpandedChange = { },
+                                expanded = subjectDropdownExpanded,
+                                onExpandedChange = {subjectDropdownExpanded = it },
                                 modifier = Modifier.weight(1f)
                             ) {
                                 OutlinedTextField(
@@ -158,14 +160,15 @@ fun HomeScreen(
                                 )
 
                                 ExposedDropdownMenu(
-                                    expanded = false,
-                                    onDismissRequest = { }
+                                    expanded = subjectDropdownExpanded,
+                                    onDismissRequest = { subjectDropdownExpanded = false}
                                 ) {
                                     authViewModel.teacherData?.subjects?.forEach { subject ->
                                         DropdownMenuItem(
                                             text = { Text(subject) },
                                             onClick = {
                                                 homeViewModel.selectedSubject = subject
+                                                subjectDropdownExpanded = false
                                             }
                                         )
                                     }
@@ -198,9 +201,9 @@ fun HomeScreen(
 
                         Column {
                             OutlinedTextField(
-                                value = roomSearchText,
+                                value = homeViewModel.selectedRoom,
                                 onValueChange = {
-                                    roomSearchText = it
+                                    homeViewModel.selectedRoom = it
                                     showRoomDropdown = it.isNotEmpty()
                                 },
                                 label = { Text("Search room...") },

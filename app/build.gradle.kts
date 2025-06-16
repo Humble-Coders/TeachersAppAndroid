@@ -3,6 +3,8 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("com.google.gms.google-services")
+    id("kotlinx-serialization") // ✅ Add this
+
 }
 
 android {
@@ -73,7 +75,7 @@ dependencies {
 // Coroutines
     implementation (libs.kotlinx.coroutines.android)
 
-    implementation ("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
 
 
     implementation ("androidx.navigation:navigation-compose:2.7.5")
