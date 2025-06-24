@@ -18,6 +18,9 @@ class AuthViewModel(
     var isLoggedIn by mutableStateOf(false)
         private set
 
+    var isInitialized by mutableStateOf(false)
+        private set
+
     var teacherData by mutableStateOf<TeacherData?>(null)
         internal set
 
@@ -43,6 +46,10 @@ class AuthViewModel(
                 teacherData = data
                 isLoggedIn = true
             }
+
+            // Add 2 second delay to show splash screen
+            kotlinx.coroutines.delay(1200)
+            isInitialized = true
         }
     }
 

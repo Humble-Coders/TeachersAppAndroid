@@ -164,6 +164,16 @@ class HomeViewModel(
         }
     }
 
+    fun endSessionSilently() {
+        val sessionData = currentSessionData ?: return
+
+        viewModelScope.launch {
+            firebaseRepository.endSession(sessionData)
+            isSessionActive = false
+            resetForm()
+        }
+    }
+
     fun restartSession() {
         alertMessage = "Session is already active for the selected classes."
         showAlert = true

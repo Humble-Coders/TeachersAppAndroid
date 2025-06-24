@@ -7,26 +7,29 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.lifecycleScope
 import com.humblecoders.teachersapp.repository.AuthRepository
 import com.humblecoders.teachersapp.repository.FirebaseRepository
 import com.humblecoders.teachersapp.ui.theme.TeachersAppTheme
 import com.humblecoders.teachersapp.viewmodel.AttendanceViewModel
 import com.humblecoders.teachersapp.viewmodel.AuthViewModel
 import com.humblecoders.teachersapp.viewmodel.HomeViewModel
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
     private lateinit var authRepository: AuthRepository
     private lateinit var firebaseRepository: FirebaseRepository
+    private var homeViewModel: HomeViewModel? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        // Initialize repositories
         authRepository = AuthRepository(this)
         firebaseRepository = FirebaseRepository()
 
@@ -36,16 +39,18 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    // Create ViewModels with repositories
                     val authViewModel = viewModel<AuthViewModel> {
                         AuthViewModelFactory(authRepository, firebaseRepository)
                             .create(AuthViewModel::class.java)
                     }
 
-                    val homeViewModel = viewModel<HomeViewModel> {
+                    val homeViewModelInstance = viewModel<HomeViewModel> {
                         HomeViewModelFactory(authRepository, firebaseRepository)
                             .create(HomeViewModel::class.java)
                     }
+
+                    // Store reference for lifecycle methods
+                    homeViewModel = homeViewModelInstance
 
                     val attendanceViewModel = viewModel<AttendanceViewModel> {
                         AttendanceViewModelFactory(firebaseRepository)
@@ -54,16 +59,40 @@ class MainActivity : ComponentActivity() {
 
                     AppNavigation(
                         authViewModel = authViewModel,
-                        homeViewModel = homeViewModel,
+                        homeViewModel = homeViewModelInstance,
                         attendanceViewModel = attendanceViewModel
                     )
                 }
             }
         }
     }
+
+    override fun onPause() {
+        super.onPause()
+        // End session when app is paused
+        homeViewModel?.let { viewModel ->
+            if (viewModel.isSessionActive) {
+                lifecycleScope.launch {
+                    viewModel.endSessionSilently()
+                }
+            }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // End session when app is destroyed
+        homeViewModel?.let { viewModel ->
+            if (viewModel.isSessionActive) {
+                lifecycleScope.launch {
+                    viewModel.endSessionSilently()
+                }
+            }
+        }
+    }
 }
 
-// ViewModelFactory classes
+
 class AuthViewModelFactory(
     private val authRepository: AuthRepository,
     private val firebaseRepository: FirebaseRepository

@@ -60,19 +60,6 @@ class FirebaseRepository {
                 )
                 sessionRef.set(data).await()
             }
-            true
-        } catch (e: Exception) {
-            false
-        }
-    }
-
-    suspend fun endSession(sessionData: SessionData): Boolean {
-        return try {
-            // End session in activeSessions
-            sessionData.classes.forEach { className ->
-                val sessionRef = db.collection("activeSessions").document(className)
-                sessionRef.update("isActive", false).await()
-            }
 
             // Update subject counters with proper map structure
             val subjectRef = db.collection("subjects").document(sessionData.subject)
@@ -95,6 +82,20 @@ class FirebaseRepository {
                     )
                 }
                 subjectRef.set(data).await()
+            }
+
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun endSession(sessionData: SessionData): Boolean {
+        return try {
+            // End session in activeSessions
+            sessionData.classes.forEach { className ->
+                val sessionRef = db.collection("activeSessions").document(className)
+                sessionRef.update("isActive", false).await()
             }
 
             true
